@@ -1,1 +1,39 @@
 
+name: Build iOS App (IPA Only)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Create Xcode project
+      run: |
+        mkdir PKWearablesIOSApp
+        cd PKWearablesIOSApp
+        swift package init --type executable
+        mkdir Sources/PKWearablesIOSApp
+        cp ../*.swift Sources/PKWearablesIOSApp/
+
+    - name: Build IPA
+      run: |
+        xcodebuild -scheme PKWearablesIOSApp \
+          -sdk iphoneos \
+          -configuration Release \
+          -archivePath build/PKWearablesIOSApp.xcarchive archive
+
+        xcodebuild -exportArchive \
+          -archivePath build/PKWearablesIOSApp.xcarchive \
+          -exportPath build \
+          -exportOptionsPlist ExportOptions.plist || true
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ipa
+        path: build
